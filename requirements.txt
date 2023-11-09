@@ -5,4 +5,5 @@ numpy
 scipy
 networkx
 matplotlib
+argparse
 black
