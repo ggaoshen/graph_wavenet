@@ -1,9 +1,7 @@
 import torch
 import torch.optim as optim
 import examples.util as util
-
-import graph_wavenet.graphwavenet as GraphWaveNet
-
+from src.graphwavenet import GraphWaveNet
 
 class Model():
     def __init__(self, scaler, num_nodes, lrate, wdecay, device, adj_mx):
