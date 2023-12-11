@@ -133,7 +133,7 @@ class GraphWaveNet(nn.Module):
             x = torch.unsqueeze(x, dim=0)
 
         batch_size = x.size()[:-3]
-
+        # print(x.size())
         input_timesteps = x.size(-3)
 
         x = x.transpose(-1, -3)

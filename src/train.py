@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 import torch
-import examples.util as util
+import util
 from model import Model
 
 parser = argparse.ArgumentParser()
