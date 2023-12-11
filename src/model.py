@@ -9,6 +9,10 @@ class Model():
         self.gwnet.to(device)
         self.optimizer = optim.Adam(self.gwnet.parameters(), lr=lrate,
                                     weight_decay=wdecay)
+        
+        # improvement
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.03)
+
         self.loss = util.masked_mae
         self.scaler = scaler
         self.clip = 5
@@ -43,6 +47,9 @@ class Model():
         if self.clip is not None:
             torch.nn.utils.clip_grad_norm_(self.gwnet.parameters(), self.clip)
         self.optimizer.step()
+
+        # improvement
+        self.scheduler.step()
         mape = util.masked_mape(predict, real, 0.0).item()
         rmse = util.masked_rmse(predict, real, 0.0).item()
         return loss.item(), mape, rmse
