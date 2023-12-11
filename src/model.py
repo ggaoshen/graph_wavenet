@@ -17,6 +17,9 @@ class Model():
         self.scaler = scaler
         self.clip = 5
 
+        #improvement
+        self.clip = 3
+
         self.edge_index = [[], []]
         self.edge_weight = []
 
