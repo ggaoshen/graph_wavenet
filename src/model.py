@@ -10,14 +10,14 @@ class Model():
         self.optimizer = optim.Adam(self.gwnet.parameters(), lr=lrate,
                                     weight_decay=wdecay)
 
-        if util.extensions_enabled():
+        if util.extensions_enabled:
             self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.03)
 
         self.loss = util.masked_mae
         self.scaler = scaler
-        
+
         self.clip = 5
-        if util.extensions_enabled():
+        if util.extensions_enabled:
             self.clip = 3
 
         self.edge_index = [[], []]
@@ -52,7 +52,7 @@ class Model():
         self.optimizer.step()
 
         # improvement
-        if util.extensions_enabled():
+        if util.extensions_enabled:
             self.scheduler.step()
         mape = util.masked_mape(predict, real, 0.0).item()
         rmse = util.masked_rmse(predict, real, 0.0).item()

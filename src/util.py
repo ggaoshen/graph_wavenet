@@ -167,8 +167,4 @@ def metric(pred, real):
     rmse = masked_rmse(pred, real, 0.0).item()
     return mae, mape, rmse
 
-extensions_enbd = False
-def enable_extensions():
-    extensions_enbd = True
-def extensions_enabled():
-    return extensions_enbd
+extensions_enabled = False
