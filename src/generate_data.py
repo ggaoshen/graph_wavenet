@@ -13,17 +13,15 @@ import pandas as pd
 import requests
 
 
-def generate_graph_seq2seq_io_data(df, x_offsets, y_offsets,
-                                   add_time_in_day=True):
-
+def generate_graph_seq2seq_io_data(df, x_offsets, y_offsets, add_time_in_day=True):
     # The individual time steps are aggregated to generate the model data
     num_samples, num_nodes = df.shape
     data = np.expand_dims(df.values, axis=-1)
     feature_list = [data]
     if add_time_in_day:
-        time_ind = (df.index.values -
-                    df.index.values.astype("datetime64[D]")) / np.timedelta64(
-                        1, "D")
+        time_ind = (
+            df.index.values - df.index.values.astype("datetime64[D]")
+        ) / np.timedelta64(1, "D")
         time_in_day = np.tile(time_ind, [1, num_nodes, 1]).transpose((2, 1, 0))
         feature_list.append(time_in_day)
 
@@ -45,10 +43,12 @@ def generate_train_val_test(args):
     # If the file is not present, it is downloaded
     filename = args.traffic_df_filename
     if filename is None:
-        url = "https://github.com/Kumbong/CS224W-GraphWavenet" + \
-            "/blob/main/data/metr-la.h5?raw=true"
-        filename = 'metr-la.h5'
-        f = open(filename, 'wb')
+        url = (
+            "https://github.com/Kumbong/CS224W-GraphWavenet"
+            + "/blob/main/data/metr-la.h5?raw=true"
+        )
+        filename = "metr-la.h5"
+        f = open(filename, "wb")
         f.write(requests.get(url).content)
         f.close()
         df = pd.read_hdf(filename)
@@ -57,13 +57,12 @@ def generate_train_val_test(args):
         df = pd.read_hdf(args.traffic_df_filename)
 
     # 0 is the latest observed sample.
-    x_offsets = np.sort(
-        np.concatenate((np.arange(-(seq_length_x - 1), 1, 1), )))
+    x_offsets = np.sort(np.concatenate((np.arange(-(seq_length_x - 1), 1, 1),)))
     # Predict the next one hour
     y_offsets = np.sort(np.arange(args.y_start, (seq_length_y + 1), 1))
-    x, y = generate_graph_seq2seq_io_data(df, x_offsets=x_offsets,
-                                          y_offsets=y_offsets,
-                                          add_time_in_day=True)
+    x, y = generate_graph_seq2seq_io_data(
+        df, x_offsets=x_offsets, y_offsets=y_offsets, add_time_in_day=True
+    )
 
     num_samples = x.shape[0]
     num_test = round(num_samples * 0.2)
@@ -71,8 +70,8 @@ def generate_train_val_test(args):
     num_val = num_samples - num_test - num_train
     x_train, y_train = x[:num_train], y[:num_train]
     x_val, y_val = (
-        x[num_train:num_train + num_val],
-        y[num_train:num_train + num_val],
+        x[num_train : num_train + num_val],
+        y[num_train : num_train + num_val],
     )
     x_test, y_test = x[-num_test:], y[-num_test:]
 
@@ -90,8 +89,9 @@ def generate_train_val_test(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output_dir", type=str, default="store/METR-LA",
-                        help="Output directory.")
+    parser.add_argument(
+        "--output_dir", type=str, default="store/METR-LA", help="Output directory."
+    )
     parser.add_argument(
         "--traffic_df_filename",
         type=str,
@@ -119,11 +119,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if os.path.exists(args.output_dir):
-        reply = str(
-            input(
-                f'{args.output_dir} exists. Do you want to overwrite it? (y/n)'
-            )).lower().strip()
-        if reply[0] != 'y':
+        reply = (
+            str(input(f"{args.output_dir} exists. Do you want to overwrite it? (y/n)"))
+            .lower()
+            .strip()
+        )
+        if reply[0] != "y":
             exit
     else:
         os.makedirs(args.output_dir)

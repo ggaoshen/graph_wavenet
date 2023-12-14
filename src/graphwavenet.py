@@ -11,7 +11,7 @@ from torch_geometric.nn import DenseGCNConv, GCNConv
 
 
 class GraphWaveNet(nn.Module):
-    r""" GraphWaveNet implementation from the
+    r"""GraphWaveNet implementation from the
     `Graph WaveNet for Deep Spatial-Temporal Graph Modeling
     <https://arxiv.org/abs/1906.00121>`_ paper. The model takes a list of
     node embeddings across several time steps and predicts the output
@@ -43,11 +43,21 @@ class GraphWaveNet(nn.Module):
         end_channels (int, optional): Size of the final linear layer
             (default: :obj:`512`)
     """
-    def __init__(self, num_nodes, in_channels, out_channels, out_timesteps,
-                 dilations=[1, 2, 1, 2, 1, 2, 1, 2], adptive_embeddings=10,
-                 dropout=0.3, residual_channels=32, dilation_channels=32,
-                 skip_channels=256, end_channels=512):
 
+    def __init__(
+        self,
+        num_nodes,
+        in_channels,
+        out_channels,
+        out_timesteps,
+        dilations=[1, 2, 1, 2, 1, 2, 1, 2],
+        adptive_embeddings=10,
+        dropout=0.3,
+        residual_channels=32,
+        dilation_channels=32,
+        skip_channels=256,
+        end_channels=512,
+    ):
         if util.extensions_enabled:
             residual_channels = 40
             dilation_channels = 40
@@ -59,14 +69,16 @@ class GraphWaveNet(nn.Module):
 
         self.dropout = dropout
 
-        self.e1 = nn.Parameter(torch.randn(num_nodes, adptive_embeddings),
-                               requires_grad=True)
-        self.e2 = nn.Parameter(torch.randn(adptive_embeddings, num_nodes),
-                               requires_grad=True)
+        self.e1 = nn.Parameter(
+            torch.randn(num_nodes, adptive_embeddings), requires_grad=True
+        )
+        self.e2 = nn.Parameter(
+            torch.randn(adptive_embeddings, num_nodes), requires_grad=True
+        )
 
-        self.input = nn.Conv2d(in_channels=in_channels,
-                               out_channels=residual_channels,
-                               kernel_size=(1, 1))
+        self.input = nn.Conv2d(
+            in_channels=in_channels, out_channels=residual_channels, kernel_size=(1, 1)
+        )
 
         self.tcn_a = nn.ModuleList()
         self.tcn_b = nn.ModuleList()
@@ -80,38 +92,55 @@ class GraphWaveNet(nn.Module):
 
         for d in dilations:
             self.tcn_a.append(
-                nn.Conv2d(in_channels=residual_channels,
-                          out_channels=dilation_channels, kernel_size=(1, 2),
-                          dilation=d))
+                nn.Conv2d(
+                    in_channels=residual_channels,
+                    out_channels=dilation_channels,
+                    kernel_size=(1, 2),
+                    dilation=d,
+                )
+            )
 
             self.tcn_b.append(
-                nn.Conv2d(in_channels=residual_channels,
-                          out_channels=dilation_channels, kernel_size=(1, 2),
-                          dilation=d))
+                nn.Conv2d(
+                    in_channels=residual_channels,
+                    out_channels=dilation_channels,
+                    kernel_size=(1, 2),
+                    dilation=d,
+                )
+            )
 
             # GCNConv is used for performing graph convolutions over the
             # normal adjacency matrix
             self.gcn.append(
-                GCNConv(in_channels=dilation_channels,
-                        out_channels=residual_channels))
+                GCNConv(in_channels=dilation_channels, out_channels=residual_channels)
+            )
 
             # Since the adaptive matrix is a softmax output, it represents a
             # dense graph
             # For fast training and inference, we use a DenseGCNConv layer
             self.gcn_adp.append(
-                DenseGCNConv(in_channels=dilation_channels,
-                             out_channels=residual_channels))
+                DenseGCNConv(
+                    in_channels=dilation_channels, out_channels=residual_channels
+                )
+            )
 
             self.skip.append(
-                nn.Conv2d(in_channels=residual_channels,
-                          out_channels=skip_channels, kernel_size=(1, 1)))
+                nn.Conv2d(
+                    in_channels=residual_channels,
+                    out_channels=skip_channels,
+                    kernel_size=(1, 1),
+                )
+            )
             self.bn.append(nn.BatchNorm2d(residual_channels))
 
-        self.end1 = nn.Conv2d(in_channels=skip_channels,
-                              out_channels=end_channels, kernel_size=(1, 1))
-        self.end2 = nn.Conv2d(in_channels=end_channels,
-                              out_channels=out_channels * out_timesteps,
-                              kernel_size=(1, 1))
+        self.end1 = nn.Conv2d(
+            in_channels=skip_channels, out_channels=end_channels, kernel_size=(1, 1)
+        )
+        self.end2 = nn.Conv2d(
+            in_channels=end_channels,
+            out_channels=out_channels * out_timesteps,
+            kernel_size=(1, 1),
+        )
 
     def forward(self, x, edge_index, edge_weight=None):
         r"""
@@ -177,7 +206,7 @@ class GraphWaveNet(nn.Module):
             else:
                 # Since dilation reduces the number of time steps,
                 # only the required number of latest time steps are considered
-                skip_out = skip_out[..., -skip_cur.size(-1):] + skip_cur
+                skip_out = skip_out[..., -skip_cur.size(-1) :] + skip_cur
 
             g = g.transpose(-1, -3)
 
@@ -187,20 +216,22 @@ class GraphWaveNet(nn.Module):
             # The data for several time steps in batched into a single batch
             # This helps speed up the model by passing a single large batch to
             # the GCN
-            data = self.__batch_timesteps__(g, edge_index,
-                                            edge_weight).to(g.device)
+            data = self.__batch_timesteps__(g, edge_index, edge_weight).to(g.device)
 
             # GCN layer
             # One GCN is for the actual adjacency matrix
             # The other GCN is for the adaptive matrix
-            gcn_out = self.gcn[k](data.x, data.edge_index,
-                                  edge_weight=torch.flatten(data.edge_attr))
-            gcn_out = gcn_out.reshape(*batch_size, timesteps, -1,
-                                      self.gcn[k].out_channels)
+            gcn_out = self.gcn[k](
+                data.x, data.edge_index, edge_weight=torch.flatten(data.edge_attr)
+            )
+            gcn_out = gcn_out.reshape(
+                *batch_size, timesteps, -1, self.gcn[k].out_channels
+            )
 
             gcn_out_adp = self.gcn_adp[k](g, adp)
-            gcn_out_adp = gcn_out_adp.reshape(*batch_size, timesteps, -1,
-                                              self.gcn[k].out_channels)
+            gcn_out_adp = gcn_out_adp.reshape(
+                *batch_size, timesteps, -1, self.gcn[k].out_channels
+            )
 
             x = gcn_out + gcn_out_adp
 
@@ -212,7 +243,7 @@ class GraphWaveNet(nn.Module):
             x = x.transpose(-3, -1)
 
             # The residual connection is fed to the next spatial-temporal layer
-            x = x + residual[..., -x.size(-1):]
+            x = x + residual[..., -x.size(-1) :]
             x = self.bn[k](x)
 
         skip_out = skip_out[..., -1:]
@@ -229,11 +260,13 @@ class GraphWaveNet(nn.Module):
 
         # The output is reshaped into the expected final shape
         if is_batched:
-            x = x.reshape(*batch_size, self.out_timesteps, self.out_channels,
-                          self.num_nodes).transpose(-1, -2)
+            x = x.reshape(
+                *batch_size, self.out_timesteps, self.out_channels, self.num_nodes
+            ).transpose(-1, -2)
         else:
-            x = x.reshape(self.out_timesteps, self.out_channels,
-                          self.num_nodes).transpose(-1, -2)
+            x = x.reshape(
+                self.out_timesteps, self.out_channels, self.num_nodes
+            ).transpose(-1, -2)
 
         return x
 
