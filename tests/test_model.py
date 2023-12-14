@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.graphwavenet import GraphWaveNet
+from graph_wavenet.graphwavenet import GraphWaveNet
 
 
 @pytest.mark.parametrize('num_nodes', [10, 20])
