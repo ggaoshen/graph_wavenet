@@ -8,3 +8,4 @@ matplotlib
 argparse
 black
 py-tgb
+pytest

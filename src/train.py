@@ -46,11 +46,14 @@ parser.add_argument('--epochs', type=int, default=100, help='')
 parser.add_argument('--print_every', type=int, default=50, help='')
 parser.add_argument('--save', type=str, default='store/checkpoint',
                     help='save path')
+parser.add_argument('--extensions_enabled', action='store_true', help='Graph Wavenet extensions for performance')
 
 args = parser.parse_args()
 
 
 def main():
+    if args.extensions_enabled:
+        util.extensions_enabled = True
     device = torch.device(args.device)
     _, _, adj_mx = util.load_adj(args.adjdata)
     dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size,

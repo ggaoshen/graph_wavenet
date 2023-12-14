@@ -1,6 +1,6 @@
 from functools import reduce
 from operator import mul
-
+import util as util
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -48,6 +48,9 @@ class GraphWaveNet(nn.Module):
                  dropout=0.3, residual_channels=32, dilation_channels=32,
                  skip_channels=256, end_channels=512):
 
+        if util.extensions_enabled:
+            residual_channels = 40
+            dilation_channels = 40
         super(GraphWaveNet, self).__init__()
 
         self.total_dilation = sum(dilations)
@@ -200,6 +203,9 @@ class GraphWaveNet(nn.Module):
                                               self.gcn[k].out_channels)
 
             x = gcn_out + gcn_out_adp
+
+            # if util.extensions_enabled:
+            #     x += data.x
 
             x = F.dropout(x, p=self.dropout)
 
