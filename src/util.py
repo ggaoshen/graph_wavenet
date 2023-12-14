@@ -192,3 +192,4 @@ def temporal_dataset_split(
         data_iterator[train_snapshots:test_start], 
         data_iterator[test_start:],
         )
+extensions_enabled = False
