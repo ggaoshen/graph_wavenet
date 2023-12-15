@@ -58,6 +58,8 @@ class GraphWaveNet(nn.Module):
         skip_channels=256,
         end_channels=512,
     ):
+        
+        # As part of the extension, we update the number of filters based on ablation exercises
         if util.extensions_enabled:
             residual_channels = 40
             dilation_channels = 40
@@ -235,8 +237,12 @@ class GraphWaveNet(nn.Module):
 
             x = gcn_out + gcn_out_adp
 
-            # if util.extensions_enabled:
-            #     x += data.x
+            # When extensions are enabled, a skip connection is added within each
+            # spatial-temporal layer
+            if util.extensions_enabled:
+                x += data.x.reshape(
+                *batch_size, timesteps, -1, self.gcn[k].out_channels
+            )
 
             x = F.dropout(x, p=self.dropout)
 

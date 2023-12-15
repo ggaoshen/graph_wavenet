@@ -167,7 +167,8 @@ def metric(pred, real):
     rmse = masked_rmse(pred, real, 0.0).item()
     return mae, mape, rmse
 
-
+# Global flag to manage Graph Wavenet extensions
+# Paper: https://arxiv.org/pdf/1912.07390.pdf
 extensions_enabled = False
 
 

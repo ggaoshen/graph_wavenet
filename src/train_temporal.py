@@ -5,6 +5,7 @@ from sklearn.discriminant_analysis import StandardScaler
 
 from graphwavenet import GraphWaveNet
 from model import Model
+import util as util
 from util import masked_mse
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -49,11 +50,13 @@ in_dim = dataset[0].num_node_features  # 8-period lagged inputs as node features
 out_dim = 1
 num_nodes = dataset[0].num_nodes  # 20
 timesteps_to_predict = 10  # 10, 20, 40 week forecast horizon
-epochs = 200
+epochs = 50
 lrate = 0.0001
 wdecay = 0.001
 save_path = "store/checkpoint"
 
+# Enable extensions
+util.extensions_enabled = True
 
 model = Model(
     num_nodes=num_nodes,

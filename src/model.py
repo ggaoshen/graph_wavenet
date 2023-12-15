@@ -23,16 +23,14 @@ class Model:
             self.gwnet.parameters(), lr=lrate, weight_decay=wdecay
         )
 
+        # As part of extensions, we enable learning rate decay and gradient clipping
+        self.scheduler = None
+        self.clip = None
         if util.extensions_enabled:
-            self.scheduler = optim.lr_scheduler.StepLR(
-                self.optimizer, step_size=1, gamma=0.03
-            )
+            self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.99)
+            self.clip = 5
 
         self.loss = util.masked_mse
-
-        self.clip = 5
-        if util.extensions_enabled:
-            self.clip = 3
 
         self.edge_index = [[], []]
         self.edge_weight = []
@@ -62,7 +60,6 @@ class Model:
             torch.nn.utils.clip_grad_norm_(self.gwnet.parameters(), self.clip)
         self.optimizer.step()
 
-        # improvement
         if util.extensions_enabled:
             self.scheduler.step()
         return loss.item()
