@@ -27,7 +27,9 @@ class Model:
         self.scheduler = None
         self.clip = None
         if util.extensions_enabled:
-            self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.99)
+            self.scheduler = torch.optim.lr_scheduler.StepLR(
+                self.optimizer, step_size=10, gamma=0.99
+            )
             self.clip = 5
 
         self.loss = util.masked_mse
