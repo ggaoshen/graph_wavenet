@@ -167,15 +167,14 @@ def metric(pred, real):
     rmse = masked_rmse(pred, real, 0.0).item()
     return mae, mape, rmse
 
+
 # Global flag to manage Graph Wavenet extensions
 # Paper: https://arxiv.org/pdf/1912.07390.pdf
 extensions_enabled = False
 
 
 def temporal_dataset_split(
-    data_iterator, 
-    train_split: float = 0.6,
-    validation_split: float = 0.2
+    data_iterator, train_split: float = 0.6, validation_split: float = 0.2
 ):
     r"""Function to split a data iterator according to a fixed ratio.
 
@@ -189,10 +188,10 @@ def temporal_dataset_split(
 
     train_snapshots = int(train_split * data_iterator.snapshot_count)
     val_snapshots = int(validation_split * data_iterator.snapshot_count)
-    test_start = train_snapshots+val_snapshots
+    test_start = train_snapshots + val_snapshots
 
     return (
-        data_iterator[0:train_snapshots], 
-        data_iterator[train_snapshots:test_start], 
+        data_iterator[0:train_snapshots],
+        data_iterator[train_snapshots:test_start],
         data_iterator[test_start:],
-        )
+    )

@@ -1,54 +1,35 @@
 import os
 import ssl
 
-from sklearn.discriminant_analysis import StandardScaler
-
-from graphwavenet import GraphWaveNet
-from model import Model
-import util as util
-from util import masked_mse
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
-
-from torch_geometric_temporal.dataset import ChickenpoxDatasetLoader
-
-dataset = ChickenpoxDatasetLoader().get_dataset()
-iterator = iter(dataset)
-print("ChickenpoxDatasetLoader", next(iterator))
-print("ChickenpoxDatasetLoader", next(iterator))
-
-# from torch_geometric_temporal.dataset import EnglandCovidDatasetLoader
-# dataset = EnglandCovidDatasetLoader().get_dataset()
-# print("EnglandCovidDatasetLoader", next(iter(dataset)))
-
-# from torch_geometric_temporal.dataset import TwitterTennisDatasetLoader
-# dataset = TwitterTennisDatasetLoader().get_dataset()
-# print("TwitterTennisDatasetLoader", next(iter(dataset)))
-
-
-# Run Chickenpox Dataset
-
 import torch
 import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 
-# training
 from tqdm import tqdm
 import time
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+from model import Model
+import util as util
 from torch_geometric_temporal.signal import temporal_signal_split
+from torch_geometric_temporal.dataset import ChickenpoxDatasetLoader
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+# Get Chickenpox Dataset
+dataset = ChickenpoxDatasetLoader().get_dataset()
 
 train_ratio = 0.8
 train_dataset, test_dataset = temporal_signal_split(dataset, train_ratio=train_ratio)
 offset = int(dataset.snapshot_count * train_ratio)  # starting index for test set
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Model inputs and traning hyperparameters parameters
 in_dim = dataset[0].num_node_features  # 8-period lagged inputs as node features
 out_dim = 1
-num_nodes = dataset[0].num_nodes  # 20
+num_nodes = dataset[0].num_nodes  # 20 nodes
 timesteps_to_predict = 10  # 10, 20, 40 week forecast horizon
 epochs = 50
 lrate = 0.0001
@@ -58,6 +39,7 @@ save_path = "store/checkpoint"
 # Enable extensions
 util.extensions_enabled = True
 
+# Model definition
 model = Model(
     num_nodes=num_nodes,
     in_dim=in_dim,
@@ -80,6 +62,7 @@ train_time = []
 best_epoch = 0
 
 
+# Post-processing for n-period forecast label
 def prepare_n_period_y(dataset):
     res = []
     for data in dataset:
@@ -92,6 +75,7 @@ def prepare_n_period_y(dataset):
 y_all = prepare_n_period_y(dataset)
 training_curve_dict = {"epoch_train_loss": []}
 
+# Training loop
 for epoch in tqdm(range(epochs)):
     train_loss = []
     t1 = time.time()
@@ -118,7 +102,7 @@ for epoch in tqdm(range(epochs)):
 
 print("Average Training Time: {:.4f} secs/epoch".format(np.mean(train_time)))
 
-# eval
+# Evaluation
 loss = 0
 for i, snapshot in enumerate(test_dataset):
     if i + timesteps_to_predict > test_dataset.snapshot_count:
