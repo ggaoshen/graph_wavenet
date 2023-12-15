@@ -169,3 +169,29 @@ def metric(pred, real):
 
 
 extensions_enabled = False
+
+
+def temporal_dataset_split(
+    data_iterator, 
+    train_split: float = 0.6,
+    validation_split: float = 0.2
+):
+    r"""Function to split a data iterator according to a fixed ratio.
+
+    Arg types:
+        * **data_iterator** *(Signal Iterator)* - Node features.
+        * **train_ratio** *(float)* - Graph edge indices.
+
+    Return types:
+        * **(train_iterator, test_iterator)** *(tuple of Signal Iterators)* - Train and test data iterators.
+    """
+
+    train_snapshots = int(train_split * data_iterator.snapshot_count)
+    val_snapshots = int(validation_split * data_iterator.snapshot_count)
+    test_start = train_snapshots+val_snapshots
+
+    return (
+        data_iterator[0:train_snapshots], 
+        data_iterator[train_snapshots:test_start], 
+        data_iterator[test_start:],
+        )
