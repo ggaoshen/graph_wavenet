@@ -29,7 +29,7 @@ if not os.path.exists(save_path):
 
 
 # Get data
-train_ratio, val_ratio = 0.8, 0.1
+train_ratio, val_ratio = 0.7, 0.1
 train_dataset, val_dataset, test_dataset = temporal_dataset_split(
     dataset, train_split=train_ratio, validation_split=val_ratio
 )
