@@ -3,18 +3,32 @@ import torch.optim as optim
 import util as util
 from graphwavenet import GraphWaveNet
 
-class Model():
-    def __init__(self, scaler, num_nodes, lrate, wdecay, device, adj_mx):
-        self.gwnet = GraphWaveNet(num_nodes, 2, 1, 12)
+
+class Model:
+    def __init__(
+        self,
+        num_nodes,
+        in_dim,
+        out_dim,
+        out_horizon,
+        lrate,
+        wdecay,
+        device,
+        edge_index=None,
+        edge_weight=None,
+    ):
+        self.gwnet = GraphWaveNet(num_nodes, in_dim, out_dim, out_horizon)
         self.gwnet.to(device)
-        self.optimizer = optim.Adam(self.gwnet.parameters(), lr=lrate,
-                                    weight_decay=wdecay)
+        self.optimizer = optim.Adam(
+            self.gwnet.parameters(), lr=lrate, weight_decay=wdecay
+        )
 
         if util.extensions_enabled:
-            self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.03)
+            self.scheduler = optim.lr_scheduler.StepLR(
+                self.optimizer, step_size=1, gamma=0.03
+            )
 
-        self.loss = util.masked_mae
-        self.scaler = scaler
+        self.loss = util.masked_mse
 
         self.clip = 5
         if util.extensions_enabled:
@@ -23,27 +37,24 @@ class Model():
         self.edge_index = [[], []]
         self.edge_weight = []
 
-        # The adjacency matrix is converted into an edge_index list
-        # in accordance with PyG API
-        for i in range(num_nodes):
-            for j in range(num_nodes):
-                if adj_mx.item((i, j)) != 0:
-                    self.edge_index[0].append(i)
-                    self.edge_index[1].append(j)
-                    self.edge_weight.append(adj_mx.item((i, j)))
+        # use adjacency matrix in the form of edge_index and edge_weight
+        # assuming static graph
+        if edge_index is not None:
+            self.edge_index = edge_index
+        if edge_weight is not None:
+            self.edge_weight = edge_weight
 
-        self.edge_index = torch.tensor(self.edge_index)
-        self.edge_weight = torch.tensor(self.edge_weight)
+        self.edge_index = torch.tensor(self.edge_index, dtype=torch.long, device=device)
+        self.edge_weight = torch.tensor(
+            self.edge_weight, dtype=torch.float, device=device
+        )
 
     def train(self, input, real_val):
         self.gwnet.train()
         self.optimizer.zero_grad()
-        input = input.transpose(-3, -1)
-        output = self.gwnet(input, self.edge_index, self.edge_weight)
+        predict = self.gwnet(input, self.edge_index, self.edge_weight).squeeze()
 
-        output = output.transpose(-3, -1)
         real = torch.unsqueeze(real_val, dim=1)
-        predict = self.scaler.inverse_transform(output)
 
         loss = self.loss(predict, real, 0.0)
         loss.backward()
@@ -54,18 +65,11 @@ class Model():
         # improvement
         if util.extensions_enabled:
             self.scheduler.step()
-        mape = util.masked_mape(predict, real, 0.0).item()
-        rmse = util.masked_rmse(predict, real, 0.0).item()
-        return loss.item(), mape, rmse
+        return loss.item()
 
     def eval(self, input, real_val):
         self.gwnet.eval()
-        input = input.transpose(-3, -1)
-        output = self.gwnet(input, self.edge_index, self.edge_weight)
-        output = output.transpose(-3, -1)
+        predict = self.gwnet(input, self.edge_index, self.edge_weight)
         real = torch.unsqueeze(real_val, dim=1)
-        predict = self.scaler.inverse_transform(output)
         loss = self.loss(predict, real, 0.0)
-        mape = util.masked_mape(predict, real, 0.0).item()
-        rmse = util.masked_rmse(predict, real, 0.0).item()
-        return loss.item(), mape, rmse
+        return loss.item()
