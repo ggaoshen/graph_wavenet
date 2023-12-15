@@ -235,8 +235,10 @@ class GraphWaveNet(nn.Module):
 
             x = gcn_out + gcn_out_adp
 
-            # if util.extensions_enabled:
-            #     x += data.x
+            if util.extensions_enabled:
+                x += data.x.reshape(
+                *batch_size, timesteps, -1, self.gcn[k].out_channels
+            )
 
             x = F.dropout(x, p=self.dropout)
 
