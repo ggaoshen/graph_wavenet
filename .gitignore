@@ -161,3 +161,6 @@ cython_debug/
 *.npy
 *.zip
 *.npz
+src/training_curve_ep200_10weeks.csv
+*.csv
+*.pth
