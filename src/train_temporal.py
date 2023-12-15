@@ -5,6 +5,7 @@ from sklearn.discriminant_analysis import StandardScaler
 
 from graphwavenet import GraphWaveNet
 from model import Model
+import util as util
 from util import masked_mse
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -54,6 +55,8 @@ lrate = 0.0001
 wdecay = 0.001
 save_path = "store/checkpoint"
 
+# Enable extensions
+util.extensions_enabled = True
 
 model = Model(
     num_nodes=num_nodes,
