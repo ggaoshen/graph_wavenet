@@ -23,6 +23,7 @@ class Model:
             self.gwnet.parameters(), lr=lrate, weight_decay=wdecay
         )
 
+        # As part of extensions, we enable learning rate decay and gradient clipping
         self.scheduler = None
         self.clip = None
         if util.extensions_enabled:
